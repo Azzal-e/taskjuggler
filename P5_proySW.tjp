@@ -5,7 +5,7 @@
  * some elements of it
  */
 
-project pSix "Web Game"  2025-12-15 +5m {
+project pSix "Web Game"  2025-12-15 +6m {
   # Set the default time zone for the project. If not specified, UTC
   # is used.
   timezone "Europe/Paris"
@@ -19,7 +19,7 @@ project pSix "Web Game"  2025-12-15 +5m {
   # the project reports. If not specified, the current day will be
   # used, but this will likely be outside of the project range, so it
   # can't be seen in the reports.
-  now 2026-02-25-13:00
+  now 2026-04-09-13:00
   # The currency for all money values is the US Dollar.
   currency "EUR"
 
@@ -67,6 +67,10 @@ resource dev2 "Samantha Müller" {
 }
 resource dev3 "Peter Green" {
   email "kkk@unizar.es"
+}
+resource me "Athanasios Usero Samaras" {
+  email "839543@unizar.es"
+  limits { dailymax 4h }
 }
 
 # Now we specify the work packages. The whole project is described as
@@ -147,13 +151,59 @@ task WMGame "Web & Mobile Game" {
     }    
   }
 
+  task tmobileF "Mobile Front End" {
+    purge chargeset
+    chargeset mFront
+    responsible me
+    depends WMGame.tback.tBEd
+    task tMDesign "Mobile GUI Design" {
+      effort 4d
+      allocate me
+    }
+    task tMBuild "Mobile Front End Construction" {
+      effort 8d
+      allocate me
+      depends WMGame.tmobileF.tMDesign
+    }
+    task tMTest "Mobile Front End Test" {
+      effort 3d
+      allocate me
+      depends WMGame.tmobileF.tMBuild
+    }
+  }
+
+  task tcloud "Cloud Deployment Support" {
+    purge chargeset
+    chargeset back
+    responsible me
+    depends WMGame.tback.tBEd
+    task tCloudEval "Cloud Evaluation and Selection" {
+      effort 3d
+      allocate me
+    }
+    task tCloudDeploy "Back End Cloud Deployment" {
+      effort 4d
+      allocate me
+      depends WMGame.tcloud.tCloudEval
+      depends WMGame.tback.tbackDev
+      journalentry 2026-04-09 "Deployment preparation updated" {
+        author me
+        alert green
+        summary "Cloud deployment support has been updated on the practice day."
+      }
+    }
+  }
+
   task ttest "Acceptance tests" {
+      start 2026-05-15
       effort 10d
       allocate boss
       allocate dev2
       actual:effort 20d
       depends WMGame.twebF
       depends WMGame.tback
+      depends WMGame.tmobileF
+      depends WMGame.tcloud
       }
 
     
@@ -242,6 +292,12 @@ textreport frame "" {
     center '<[report id="development"]>'
   }
 
+  textreport "InitialPlan" {
+    formats html
+    title "Initial Plan"
+    center '<[report id="planOverview"]>'
+  }
+
   textreport "ContactList" {
     formats html
     title "Contact List"
@@ -263,6 +319,20 @@ taskreport overview "" {
           revenue, chart { ${TaskTip} }
   # For this report we like to have the abbreviated weekday in front
   # of the date. %a is the tag for this.
+  timeformat "%a %Y-%m-%d"
+  loadunit days
+  hideresource @all
+  balance cost rev
+  caption 'All effort values are in man days.'
+}
+
+# Additional overview to visualize the initial planning scenario.
+taskreport planOverview "" {
+  scenarios plan
+  headline "Initial Project Plan"
+  columns bsi { title 'WBS' },
+          name, start, end, effort, cost,
+          revenue, chart { ${TaskTip} }
   timeformat "%a %Y-%m-%d"
   loadunit days
   hideresource @all
